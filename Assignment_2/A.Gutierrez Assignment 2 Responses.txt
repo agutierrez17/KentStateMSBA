@@ -1,0 +1,76 @@
+Andrew Gutierrez
+Fundamentals of Machine Learning
+Assignment 2: k-NN Classification
+
+Comments on Code Output*
+*Because of the minute differences in output that are produced each time a statistical model is run in R, I'll be recording my responses in a separate text document from the R Markdown file in order to be able to accurately comment on the output from each code piece. 
+If I run the code in R Markdown for example and type my comments on the code output in there for example, when I go to knit my PDF file the resulting code output will be slightly different in the resulting PDF compared to the original R output that I based my comments on.
+To ensure that the output I am commenting on is the same as the output in the final R Markdown file, I'll be recording my responses here in this text file rather than in the R Markdown.
+
+###### 1.
+Consider the following customer:
+1. Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education_1 = 0, Education_2 =
+1, Education_3 = 0, Mortgage = 0, Securities Account = 0, CD Account = 0, Online = 1, and
+Credit Card = 1. 
+
+How would this customer be classified?
+
+A: The "0" value returned by the model indicates that the customer will not be classified as a personal loan applicant.
+
+
+###### 2.
+What is a choice of k that balances between overfitting and ignoring the predictor information?
+
+A: This model shows that the optimal value of k to be used with the normalized Universal Bank dataset is 1, with a 96.5% accuracy figure. 
+
+###### 3.
+Show the confusion matrix for the validation data that results from using the best k.
+
+A: This confusion matrix shows that a total of 70 cases out of the 2,000-case validation set were misclassified (3.5%). Specifically, there were 48 false negatives and 22 false positives. 
+We can use this information to further calculate some statistics about the model:
+
+Accuracy ( (TP+TN)/N ): 96.5%
+Recall ( TP/(TP+FN) ): 72.3%
+Precision ( TP/(TP+FP) ): 85.2%
+Specificity ( TN/(TN+FP) ): 98.8%
+
+This shows that the model has a high accuracy and specificity, but a comparatively lower precision and recall.
+
+###### 4.
+Consider the following customer: 
+Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education_1 = 0, Education_2 = 1, Education_3 = 0, Mortgage = 0, Securities Account = 0, CD Account = 0, Online = 1 and Credit Card = 1. 
+Classify the customer using the best k.
+
+A: With our ideal value of k still being 1, our new customer is still being classified as "0" by our k-NN model - meaning they are still not likely to be a personal loan applicant.
+
+###### 5. 
+Repartition the data, this time into training, validation, and test sets (50% : 30% : 20%). 
+Apply the k-NN method with the k chosen above. 
+Compare the confusion matrix of the test set with that of the training and validation sets. Comment on the differences and their reason.
+
+A: I'll calculate the following statistics first for the training data confusion matrix:
+
+Accuracy ( (TP+TN)/N ): 97.4%
+Recall ( TP/(TP+FN) ): 74.9%
+Precision ( TP/(TP+FP) ): 96.2%
+Specificity ( TN/(TN+FP) ): 99.7%
+
+I'll calculate the same statistics now for the validation data confusion matrix:
+
+Accuracy ( (TP+TN)/N ): 95.5%
+Recall ( TP/(TP+FN) ): 61.7%
+Precision ( TP/(TP+FP) ): 89.3%
+Specificity ( TN/(TN+FP) ): 99.2%
+
+And finally, the calculations for the test data confusion matrix:
+
+Accuracy ( (TP+TN)/N ): 95.4%
+Recall ( TP/(TP+FN) ): 59.3%
+Precision ( TP/(TP+FP) ): 89.1%
+Specificity ( TN/(TN+FP) ): 99.2%
+
+The confusion matrices show that all of the models are relatively accurate, precise, and specific, with accuracy figures above 95% across the board, precision figures all above 89%, and specificity above 99%. The fact that the accuracy, precision, and specificity figures are all lower for the validation and test data sets compared to the training data set though indicates that the model was slightly better fit to the training data than it was to the validation and test data (which logically follows from the fact that the training data was used to 'fit' the model first).
+
+In addition, the recall figures are generally lower across the board when compared to the other statistical measures (none of the matrices have a recall higher than 74%), but they get progressively worse moving from the training data to the validation data, and then from there to the test data. This indicates that while the overall model is relatively accurate, it is not quite as good at detecting its important class members correctly, and it becomes even less so as we move through the partitioned data sets.
+
+One last notable thing about these matrices though is the similarity between the test data sets and the validation sets. While the recall is slightly lower on the test data, the rest of the statisical figures are essentially the same - indicating that the model worked just about as well on the test data as it did on the slightly larger validation data set.

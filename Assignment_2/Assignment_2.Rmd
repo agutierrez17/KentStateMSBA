@@ -1,0 +1,240 @@
+---
+title: "Assignment_2"
+author: "Andrew Gutierrez"
+date: "`r Sys.Date()`"
+output: pdf_document
+classoption: landscape
+---
+Note that my responses to the 5 assignment prompts are actually contained in the 'A.Gutierrez Assignment 2 Responses' TXT file that is also included in my GitHub folder for this assignment.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,eval = TRUE)
+```
+
+First, I'll install the requisite libraries:
+
+```{r install}
+library(dplyr)
+library(caret)
+library(ISLR)
+library(ggplot2)
+library(dummy)
+library(FNN)
+```
+
+Then, I'll read the UniversalBank.csv file into a DataFrame in R:
+
+```{r import}
+##### Note: the below file path may need to be adjusted, as it currently references a local location on my laptop
+UB = read.csv("C:\\Users\\gutiera9\\Documents\\MSBA KSU\\UniversalBank.csv",header=T,sep=",")
+
+head(UB)
+```
+Before proceeding further, I'll first split the categorical column "Education" into separate dummy variables corresponding to 'High School' (value = 1), 'Undergraduate' (value = 2), and 'Graduate' (value = 3).
+
+```{r dummy}
+##### Convert Education column to categorical
+UB$Education <- as.factor(UB$Education)
+
+##### Rename the values in the Education column using the levels() function
+levels(UB$Education) <- c('High School','Undergraduate','Graduate')
+levels(UB$Education)
+
+##### Convert Education Column into dummy variables
+dummy_model <- dummyVars(~Education, data=UB)
+head(predict(dummy_model,UB))
+
+##### Combine original dataframe with new dummy variables, then remove the original Education column, along with the ID and ZIP code columns which we will not need for our model
+df <- data.frame(predict(dummy_model,newdata = UB))
+UB <- cbind(UB,df)
+UB <- UB[-c(1,5,8)]
+head(UB)
+
+```
+
+Next, I'll split the data into a training set (comprising 60% of the total dataset), and a validation set (comprising the remaining 40%). Using the createDataPartition() function will ensure that the training and validation samples remained "stratified" - since only 9.6% of the customers in the dataset accepted the personal loan, we'll need to make sure that ratio of personal loan customers to non-personal loan customers stays constant in both samples.
+
+```{r split}
+
+Validation_Index = createDataPartition(UB$Personal.Loan,p=0.4,list=FALSE) # Set aside 40% for the Validation set
+Validation_Data = UB[Validation_Index,]
+Training_Data = UB[-Validation_Index,] # Remaining data becomes the Training set
+
+print('Summary of Training Data Set: ')
+summary(Training_Data)
+
+print('Summary of Validation Data Set: ')
+summary(Validation_Data)
+
+```
+
+Before I can jump in to start running a k-NN analysis, I'll first need to normalize the training predictors using a range method, which will result in all variables being re-scaled from 0 to 1. I'll follow by using the normalized values from the training set to also normalize the validation set predictor values. To do this, I'll use CARET's preProcess() function.
+
+```{r normalize}
+
+##### Normalize Training Set Predictors, then use values to normalize Validation Set
+normalizedValues <- preProcess(Training_Data[,c(1:6,8:14)], method=c("range"))
+Training_Data[,c(1:6,8:14)] <- predict(normalizedValues, Training_Data[,c(1:6,8:14)])
+Validation_Data[,c(1:6,8:14)]<- predict(normalizedValues, Validation_Data[,c(1:6,8:14)])
+
+print('Summary of normalized Training Data Predictors: ')
+summary(Training_Data)
+
+print('Summary of normalized Validation Data Predictors: ')
+summary(Validation_Data)
+```
+
+Perform a k-NN classification with all predictors except ID and ZIP code
+using k = 1. Specify the success class as 1 (loan acceptance), and use the
+default cutoff value of 0.5. 
+
+Now that we have our normalized predictor variables, and our success class to serve as the labels (Personal Loan), we can proceed with running a k-NN model with k equal to 1.
+
+``` {r knn}
+
+##### Run KNN Function for K=1
+predicted_val_labels <- knn(Training_Data[,c(1:6,8:14)],Validation_Data[,c(1:6,8:14)],cl=Training_Data[,7],k=1)
+
+##### View class output for the first 100 records in the validation set
+print(predicted_val_labels[1:100])
+
+```
+
+Consider the following customer:
+1. Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education_1 = 0, Education_2 =
+1, Education_3 = 0, Mortgage = 0, Securities Account = 0, CD Account = 0, Online = 1, and
+Credit Card = 1. 
+
+How would this customer be classified?
+
+```{r newcustomer}
+
+##### Create variables for new customer
+Age.new <- 40
+Experience.new <- 10
+Income.new <- 84
+Family.new <- 2
+CCAvg.new <- 2
+Education.High.School.new <- 0
+Education.Undergraduate.new <- 1
+Education.Graduate.new <- 0
+Mortgage.new <- 0
+Securities.Account.new <- 0
+CD.Account.new <- 0
+Online.new <- 1
+CreditCard.new <- 1
+
+##### Create new dataframe for variables for the existing customer
+NewCustomer = data.frame(Age = Age.new, Experience = Experience.new, Income = Income.new, Family = Family.new, CCAvg = CCAvg.new, Education.High.School = Education.High.School.new, Education.Undergraduate = Education.Undergraduate.new, Education.Graduate = Education.Graduate.new, Mortgage = Mortgage.new, Securities.Account = Securities.Account.new, CD.Account = CD.Account.new, Online = Online.new, CreditCard = CreditCard.new)
+
+##### Normalize and view new dataframe
+NewCustomer <- predict(normalizedValues,NewCustomer)
+NewCustomer
+
+##### Run the model again, testing on the new dataframe
+predicted_val_labels.2 <- knn(Training_Data[,c(1:6,8:14)],NewCustomer,cl=Training_Data[,7],k=1)
+
+##### Display the resulting class
+print(predicted_val_labels.2[1])
+
+```
+
+What is a choice of k that balances between overfitting and ignoring the predictor information?
+
+```{r hypertuning}
+
+##### Create dataframe containing all values of k 1 through 15
+accuracy.df <- data.frame(k = seq(1, 15, 1), accuracy = rep(0, 15))
+
+##### Loop through all values of K in the dataframe to find the ideal one
+for(i in 1:15) {
+  hypertune <- knn(train=Training_Data[,c(1:6,8:14)], test=Validation_Data[,c(1:6,8:14)], 
+                  cl = Training_Data[,7], k = i,prob=TRUE)
+  accuracy.df[i, 2] <- confusionMatrix(hypertune, as.factor(Validation_Data[, 7]))$overall[1] 
+}
+accuracy.df
+
+```
+
+Show the confusion matrix for the validation data that results from using the best k.
+
+```{r confusion}
+library("gmodels")
+
+##### Run KNN Function again with new value of k
+predicted_val_labels.3 <- knn(Training_Data[,c(1:6,8:14)],Validation_Data[,c(1:6,8:14)],cl=Training_Data[,7],k=1,prob=TRUE)
+
+##### Generate Confusion Matrix
+CrossTable(x=Validation_Data[,7],y=predicted_val_labels.3,prop.chisq=FALSE)
+
+```
+
+Consider the following customer: Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education_1 = 0, Education_2 = 1, Education_3 = 0, Mortgage = 0, Securities Account = 0, CD Account = 0, Online = 1 and Credit Card = 1. Classify the customer using the best k.
+
+```{r classify}
+
+##### Run the model again on the previous dataframe, but changing the value of k
+predicted_val_labels.4 <- knn(Training_Data[,c(1:6,8:14)],NewCustomer,cl=Training_Data[,7],k=3)
+
+##### Display the resulting class
+print(predicted_val_labels.4[1])
+```
+
+Repartition the data, this time into training, validation, and test sets (50% : 30% : 20%). Apply
+the k-NN method with the k chosen above. Compare the confusion matrix of the test set
+with that of the training and validation sets. Comment on the differences and their reason.
+
+```{r repartition}
+set.seed(15)
+
+Test_Index = createDataPartition(UB$Personal.Loan,p=0.2, list=FALSE) # Set aside 20% for the Validation set
+Test_Data = UB[Test_Index,]
+TraVal_Data = UB[-Test_Index,] # Validation and Training data is rest
+
+Train_Index.2 = createDataPartition(TraVal_Data$Personal.Loan,p=0.625, list=FALSE) # 62.5% of remaining data becomes the training set 
+Training_Data.2 = TraVal_Data[Train_Index.2,]
+Validation_Data.2 = TraVal_Data[-Train_Index.2,] # rest as validation
+
+##### View number of records in training set:
+dim(Training_Data.2)[1]
+##### View number of records in validation set:
+dim(Validation_Data.2)[1]
+##### View number of records in test set:
+dim(Test_Data)[1]
+
+##### Normalize values in all data sets
+normalizedValues.2 <- preProcess(Training_Data.2[,c(1:6,8:14)], method=c("range"))
+Training_Data.2[,c(1:6,8:14)] <- predict(normalizedValues.2, Training_Data.2[,c(1:6,8:14)])
+Validation_Data.2[,c(1:6,8:14)] <- predict(normalizedValues.2, Validation_Data.2[,c(1:6,8:14)])
+Test_Data[,c(1:6,8:14)] <- predict(normalizedValues.2, Test_Data[,c(1:6,8:14)])
+
+print('Summary of Training Data:')
+summary(Training_Data.2)
+print('Summary of Validation Data:')
+summary(Validation_Data.2)
+print('Summary of Test Data:')
+summary(Test_Data)
+
+##### Run k-NN function with ideal value of k using training data
+predicted_train_labels.2 <- knn(Training_Data.2[,c(1:6,8:14)],Training_Data.2[,c(1:6,8:14)],cl=Training_Data.2[,7],k=3,prob=TRUE)
+
+##### Run k-NN function again using validation data
+predicted_val_labels.5 <- knn(Training_Data.2[,c(1:6,8:14)],Validation_Data.2[,c(1:6,8:14)],cl=Training_Data.2[,7],k=3,prob=TRUE)
+
+##### Run k-NN function one more time using test data
+predicted_test_labels <- knn(Training_Data.2[,c(1:6,8:14)],Test_Data[,c(1:6,8:14)],cl=Training_Data.2[,7],k=3,prob=TRUE)
+
+
+##### Generate Confusion Matrix for training data 
+print('Training Data Confusion Matrix:')
+CrossTable(x=Training_Data.2[,7],y=predicted_train_labels.2,prop.chisq=FALSE)
+
+##### Generate Confusion Matrix for validation data
+print('Validation Data Confusion Matrix:')
+CrossTable(x=Validation_Data.2[,7],y=predicted_val_labels.5,prop.chisq=FALSE)
+
+##### Generate Confusion Matrix for test data
+print('Test Data Confusion Matrix:')
+CrossTable(x=Test_Data[,7],y=predicted_test_labels,prop.chisq=FALSE)
+```
+
