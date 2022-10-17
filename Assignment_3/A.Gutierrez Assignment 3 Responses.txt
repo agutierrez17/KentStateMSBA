@@ -1,0 +1,57 @@
+Andrew Gutierrez
+Fundamentals of Machine Learning
+Assignment 3: Naive Bayes Classifer
+
+Comments on Code Output*
+*Because of the minute differences in output that are produced each time a statistical model is run in R, I'll be recording my responses in a separate text document from the R Markdown file in order to be able to accurately comment on the output from each code piece. 
+If I run the code in R Markdown for example and type my comments on the code output in there for example, when I go to knit my PDF file the resulting code output will be slightly different in the resulting PDF compared to the original R output that I based my comments on.
+To ensure that the output I am commenting on is the same as the output in the final R Markdown file, I'll be recording my responses here in this text file rather than in the R Markdown.
+
+###### B.
+Consider the task of classifying a customer who owns a bank credit card and is actively using online banking services. 
+Looking at the pivot table, what is the probability that this customer will accept the loan offer? 
+[This is the probability of loan acceptance (Loan = 1) conditional on having a bank credit card (CC = 1) and being an active user of online banking services (Online = 1)].
+
+A: This probability as calculated on the training dataset representing 60% of the overall data is 0.09647495, or 52 / (52+487).
+This indicates that of online banking customers who also have credit cards, the conditional probability of any one of those individuals accepting a personal loan is 9.64%
+
+###### D.
+Compute the following quantities [P(A | B) means “the probability of A given B”]: 
+i. P(CC = 1 | Loan = 1) (the proportion of credit card holders among the loan acceptors)	
+	A: 0.3297491 (32.9%) "92 / (92+187)"
+ii. P(Online = 1 | Loan = 1) 	
+	A: 0.5949821 (59.4%) "166 / (166+113)"
+iii. P(Loan = 1) (the proportion of loan acceptors)	
+	A: 0.093 (9.3%) "(92+187) / 3000"
+iv. P(CC = 1 | Loan = 0)	
+	A: 0.2877619 (28.7%) "783 / (783+1938)"
+v. P(Online = 1 | Loan = 0)	
+	A: 0.6082323 (60.8%) "1655 / (1655+1066)"
+vi. P(Loan = 0)	
+	A: 0.907 (90.7%) "(783+1938) / 3000"
+
+
+###### E. 
+Use the quantities computed above to compute the naive Bayes probability P(Loan = 1 | CC = 1, Online = 1). 
+
+A: The result of the equation (0.3297491 * 0.5949821 * 0.093) / ((0.3297491 * 0.5949821 * 0.093) + (0.2877619 * 0.6082323 * 0.907)) is a naive Bayes probability of 0.1030885, or 10.3%.
+
+###### F. 
+Compare this value with the one obtained from the pivot table in (B). 
+Which is a more accurate estimate? 
+
+A: The Bayes probability value of 10.3% that I calculated is slightly higher than the earlier exact probability I calculated of 9.64%.
+Of these figures, the exact value is more accurate, as computing it is the equivalent of finding all of the Universal Bank customers in the training data set that meet all three of the criteria (credit card user, online services user, and personal loan customer).
+The reason why we might prefer using the naive Bayes method in a particular circumstance instead of the exact method, however, is because it is more feasible to use for larger datasets that have more than just the three variables we tested for in this exercise. 
+
+###### G. 
+Which of the entries in this table are needed for computing P(Loan = 1 | CC = 1, Online = 1)? 
+Run naive Bayes on the data. 
+Examine the model output on training data, and find the entry that corresponds to P(Loan = 1 | CC = 1, Online = 1). 
+Compare this to the number you obtained in (E).
+
+A: From the Bayes model output based on the training data, we will need the A-priori probabilities which correspond to P(Loan = 0) and P(Loan = 1) in order to calculate the Bayes formula.
+We will also need the values in the first columns from the two subsequent tables for the "Online" and "Credit Card" target classes, which correspond to P(Online = 0 | Loan = 1) and P(Online = 1 | Loan = 1) in the Online table, and P(CreditCard = 0 | Loan = 1) and P(CreditCard = 1 | Loan = 1) in the CreditCard table.
+
+The Bayes model output in R shows that the values of P(Loan = 0) and P(Loan = 1) calculated by the model are identical to the values I calculated by hand in Problem E using my pivot tables (0.907 and 0.093, respectively), that the model's values of P(Online = 0 | Loan = 1) and P(Online = 1 | Loan = 1) are also identical to those that I calculated by hand (0.608 and 0.594, respectively) and lastly that the model's values of P(CreditCard = 0 | Loan = 1) and P(CreditCard = 1 | Loan = 1) are identical to what I calculated by hand (0.287 and 0.329).
+Plugging these values into the naive Bayes formula results in an overall naive Bayes probability that is identical to what I calculated earlier in Problem E - 10.3%.
