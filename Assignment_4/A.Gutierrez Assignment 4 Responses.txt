@@ -1,0 +1,44 @@
+Andrew Gutierrez
+Fundamentals of Machine Learning
+Assignment 4: Clustering
+
+Comments on Code Output*
+*Because of the minute differences in output that are produced each time a statistical model is run in R, I'll be recording my responses in a separate text document from the R Markdown file in order to be able to accurately comment on the output from each code piece. 
+If I run the code in R Markdown for example and type my comments on the code output in there for example, when I go to knit my PDF file the resulting code output will be slightly different in the resulting PDF compared to the original R output that I based my comments on.
+To ensure that the output I am commenting on is the same as the output in the final R Markdown file, I'll be recording my responses here in this text file rather than in the R Markdown.
+
+###### B.
+Interpret the clusters with respect to the numerical variables used in forming the clusters.
+
+A: The clusters show three distinct groups:
+
+Cluster 1 consists of 6 companies that exhibit both low revenue growth as well as low net profit margins, meaning that their month-over-month sales is minimal or even negative, while at the same time their expenses are elevated compared to their revenue.
+This group includes Allergan, Amersham, Bayer, Chattem, IVAX, and Pharmacia and features revenue growth ranging from -3.17 (Bayer) to 15 (Pharmacia), and net profit margins ranging from 2.6 (Bayer) to 11.2 (Amersham)
+
+Cluster 2 consists of 8 companies that exhibit low revenue growth but high net profit margins - meaning that even though their month-over-month sales are relatively static, they are still able to turn a high profit by keeping their expenses low.
+This group includes Abbott Laboratories, AstraZeneca, Bristol-Myers Squibb, Eli Lilly and Company, J&J, Novartis AG, Schering-Plough, and Wyeth. 
+The revenue growth in this group ranges from -2.69 (Novartis) to 15 (AstraZeneca), while the net profit margins range from 16.1 (Abbott Labs) to 23.4 (Eli Lilly).
+
+Cluster 3 consists of 7 companies that exhibit both high revenue growth and high net profit margins - meaning that not only are their month-to-month sales increasing, but they are keeping their expenses low relative to their increasing sales as well.
+This group includes Aventis, Elan Corp, GlaxoSmithKline, Medicis, Merck & Co, Pfizer, and Watson Pharmaceuticals.
+The revenue growth in this group ranges from 17.35 (Merck & Co) to 34.21 (Elan Corp), and the net profit margins range from 12.9 (Aventis) to 25.2 (Pfizer).
+
+
+###### C.
+Is there a pattern in the clusters with respect to the numerical variables (10 to 12)? (those not used in forming the clusters)
+
+A: There does not appear to be a discernible pattern among the categorical variables at the end of the dataset w/r/t the three clusters formed by my model. 
+In particular, the Median Recommendation variable does not show any sort of relation to the clusters, which perhaps comes as a surprise given that the two chosen variables (Revenue Growth and Net Profit Margin) seem to be ones that would be strong indicators of a given company's financial performance (and thus would be of special interest to investors).
+For example, Cluster 3 (the high-growth, high-margin group) has two "Moderate Sell" companies in it, even though logic dictates that this group would be the most "desirable" to buy given their high level of financial performance based on these stats. 
+Cluster 1, on the other hand, has two "Moderate Buys" and one "Strong Buy" - this despite the fact that this group features the lowest revenue growth figures as well as the lowest profit margins. 
+This could indicate that the Median Recommendations could take into account other variables besides just growth and margin - perhaps even variables external to the Pharmaceuticals dataset entirely. 
+Examples of variables that might factor in to the recommendations but that are not reflected in the actual dataset could be, say, a new product that a company has only just announced, or the company's technology being out-of-date compared to its' competitors. 
+It is clear though that there is little correlation between the Median Recommendation and growth + margin.
+
+###### D.
+Provide an appropriate name for each cluster using any or all of the variables in the dataset.
+
+A: 
+Cluster 1: Low-Growth, Low-Margin Companies
+Cluster 2: Low-Growth, High-Margin Companies
+Cluster 3: High-Growth, High-Margin Companies
