@@ -1,0 +1,91 @@
+---
+title: "Assignment_4"
+author: "Andrew Gutierrez"
+date: "`r Sys.Date()`"
+output: pdf_document
+classoption: landscape
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+First, I'll install the requisite packages.
+
+```{r install}
+
+library(tidyverse) 
+library(factoextra) 
+library(ISLR)
+library(flexclust)
+
+```
+
+Then, I'll read the Pharmaceuticals.csv file into a DataFrame in R:
+
+```{r dataframe}
+pharma = read.csv("C:\\Users\\gutiera9\\Documents\\MSBA KSU\\Pharmaceuticals.csv",header=T,sep=",")
+
+head(pharma)
+```
+1. Use only the numerical variables (1 to 9) to cluster the 21 firms. Justify the various choices made in
+conducting the cluster analysis, such as weights for different variables, the specific clustering algorithm(s) used, the number of clusters formed, and so on.
+
+First, I'll scale the numeric columns in the dataframe according to z-score:
+
+``` {r scale}
+
+set.seed(123)
+
+pharma[,c(3:11)] <- scale(pharma[,c(3:11)] )
+print(pharma)
+
+```
+For this exercise, I've chosen to cluster the pharmaceutical companies by two variables - Revenue Growth, and Net Profit Margin. I believe these two variables in particular are ones that investors would be very interested in grouping these companies by, as they provide reasonable measures of how well each company is doing financially. 
+
+Since neither of these fields have any extreme outliers, the Euclidean distance measure should suffice for calculating the distance between observations. These two fields are not necessarily correlated with each other either. A company might be experiencing high revenue growth for example, but if their expenses are also high, then their net profit margin would comparatively be lower. So high revenue growth does not necessarily beget a high profit margin. Since Euclidean distance ignores relationships between variables, the lack of correlation between these two figures should work just fine for this particular model. 
+
+I'll now use the get_dist() function to display the Euclidean distances of each data point.
+
+
+```{r distance}
+distance <- get_dist(pharma[,c(10,11)],method="euclidean")
+fviz_dist(distance)
+
+```
+
+Next, we have to determine the optimal value of k. We'll do this using an elbow chart.
+
+```{r elbow}
+
+fviz_nbclust(pharma[,c(10,11)], kmeans, method = "wss")
+
+```
+This elbow chart clearly shows that the optimal value of k (meaning the value that corresponds to the least amount of difference between items in each cluster) is 3. So, three clusters it is for my model.
+
+Now that I have my ideal value of k, it's time to run our clustering model. For this I'll use the kmeans method, as it works particularly well with the Euclidean distance measure that I've chosen to use earlier (kmeans has the added benefits of being relatively easy to implement, and of producing generally tighter clusters than other clustering models).
+
+```{r model}
+
+k3 <- kmeans(pharma[,c(10,11)], centers = 3, nstart = 25)
+
+print("Here are the centers of each cluster: ")
+print(k3$centers)
+
+print("Here are the number of companies in each cluster: ")
+print(k3$size)
+
+print("And here is the visual: ")
+fviz_cluster(k3, data = pharma[,c(10,11)]) 
+
+```
+Before moving on to the remaining assignment prompts, I'll merge the cluster output from my model with the original Pharmaceuticals dataframe - allowing me to easily see which companies are allocated to which clusters.
+
+```{r cbind}
+pharma <- cbind(pharma,data.frame(k3$cluster))
+print(pharma[,c(2,12:15)])
+
+```
+
+Note that my responses to the remaining assignment prompts B through D are actually contained in the 'A.Gutierrez Assignment 4 Responses' TXT file that is also included in my GitHub folder for this assignment.
+
