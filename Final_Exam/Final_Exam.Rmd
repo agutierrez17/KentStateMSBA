@@ -1,0 +1,122 @@
+---
+title: "Final_Exam"
+author: "Andrew Gutierrez"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+For my final exam submission, I'll be utilizing a publicly-available dataset published by Lake County, Illinois through catalog.data.gov. The dataset shows the cancer rates per 100,000 people for the 27 ZIP codes that are present in the county, with further breakouts by type of cancer (Colorectal, Lung, Breast, Prostate, and Urinary cancers).
+
+For this project, I'll be doing an analysis clustering the 27 ZIP codes by their cancer rates in order to visualize and understand the varying rates of propensity for cancer among the different populations within Lake County. I'll then use that model to entertain a hypothetical scenario: suppose Lake County decided to annex a previously-unincorporated community just outside the county borders, creating a new ZIP code for the community in the process. How would this new community fit into the pre-existing clusters based on cancer rates?
+
+First, I'll install the requisite packages.
+
+```{r install}
+
+library(factoextra) 
+library(flexclust)
+library(clue)
+
+```
+
+Next, I'll read the CSV file into a DataFrame in R:
+
+```{r read}
+CR = read.csv("C:\\Users\\gutiera9\\Documents\\MSBA KSU\\LakeCounty_Illinois_CancerRates.csv",header=T,sep=",")
+
+```
+
+I'll do some brief manipulation of the DataFrame here, dropping the "FID", "Shape Length", and "Shape Analysis" columns which will not factor into our analysis, and also converting the ZIP code column to a "character" data type so that it is not read as an integer.
+
+``` {r manipulate}
+CR <- CR[-c(1,9:10)] # drop non-relevant columns
+
+CR[c(1)] <- lapply(CR[c(1)], as.character) # convert ZIP column to character
+
+head(CR)
+
+```
+
+Fortuitously, since all of the numerical variables in this dataset are on a "cases per 100,000 persons" scale, none of the variables will need to be normalized.
+
+Next, I'll calculate the Euclidean distance between the 27 ZIP code records in the dataset. I chose Euclidean distance because A) none of the numerical variables in the dataset have any extreme outliers (the cancer rates here all fall within a pretty well-defined range), and B) the variables are all on the same scale.
+
+``` {r euclidean}
+distance <- get_dist(CR[c(2:7)],method="euclidean") # calculate distances
+fviz_dist(distance) # display the distances in a graph
+
+```
+
+Next, I'll determine the optimal value of k (i.e. the optimal number of clusters) using an elbow chart.
+
+``` {r elbow}
+fviz_nbclust(CR[c(2:7)], kmeans, method = "wss")
+
+```
+
+To my eye, the clear "elbow bend" on the above chart that affords the best balance between model bias and overfitting is k = 3, as WSS begins decreasing at a much smaller rate beyond that point.
+
+I'll now run my clustering model using the k-means algorithm, as it works particularly well when used with Euclidean distances.
+
+``` {r kmeans}
+
+k3 <- kmeans(CR[c(2:7)], centers = 3, nstart = 25) # run k-means algorithm
+
+```
+
+Let's take a look at the number of ZIP codes within each cluster, as well as the cluster centers.
+
+``` {r cluster stats}
+
+print(k3$size) # print the size of each cluster
+
+print(k3$centers) # print the centers of each cluster
+
+```
+
+And now, let's take a look at the clusters, visualized:
+
+``` {r visual}
+
+fviz_cluster(k3, data = CR[c(2:7)], show.clust.cent=TRUE,main='Lake County, IL ZIP Codes clustered by Cancer Rates')
+
+```
+
+What this visual and the preceding stats show are three distinct clusters:
+
+ - Cluster 1, "Low-Cancer Rate ZIP Codes". This cluster contains 13 ZIP codes and has a cluster center that represents an overall cancer rate of 2,070 cases per 100,000 persons.
+ 
+ - Cluster 2 "Medium-Cancer Rate ZIP Codes". This cluster contains 11 ZIP codes and has a cluster center that represents an overall cancer rate of 2,924 cases per 100,000 persons.
+ 
+ - Cluster 3 "High-Cancer Rate ZIP Codes". This cluster contains 3 ZIP codes and has a cluster center that represents an overall cancer rate of 3,959 cases per 100,000 persons. 
+ 
+I'll now merge the cluster output from my model with the original dataframe - allowing me to easily see which ZIP codes have been allocated to which clusters. 
+
+```{r cbind}
+CR <- cbind(CR,data.frame(k3$cluster))
+print(CR[,c(1,7:8)])
+
+```
+Now that my model is complete, I'll entertain my hypothetical scenario - the expansion of Lake County, Illinois. How would our new ZIP code addition fall within these clusters?
+
+I'll start by creating a new dataframe containing only the new data point.
+
+``` {r newZIP}
+NewZIP = data.frame(ZIP = "60100", Colorectal = 270, Lung_Bronc = 150, Breast_Can = 250 , Prostate_C = 350, Urinary_Sy = 275, All_Cancer = 3010) ##### Create new dataframe for the newly-acquired ZIP code.
+
+NewZIP
+
+```
+And I'll now use the existing k-means model to make my prediction.
+
+
+``` {r predict}
+
+cl_predict(k3, NewZIP[c(2:7)])
+
+```
+Running the new data point through the model shows that the new annexation to Lake County comfortably fits within the "Medium-Cancer Rate ZIP Codes" cluster.
